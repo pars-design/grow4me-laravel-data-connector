@@ -208,7 +208,7 @@ composer test
 vendor/bin/pint
 ```
 
-The CI matrix covers Laravel 12/13 and PHP 8.3/8.4. See [CONTRIBUTING.md](CONTRIBUTING.md)
+The CI matrix covers Laravel 12/13 and PHP 8.3/8.4/8.5. See [CONTRIBUTING.md](CONTRIBUTING.md)
 and [SECURITY.md](SECURITY.md).
 
 ## License
