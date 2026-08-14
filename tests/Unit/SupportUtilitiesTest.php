@@ -18,6 +18,11 @@ it('accepts only public https media outside the configured local host exception'
 
     expect($normalizer->normalize('https://cdn.example.com/product.jpg'))->toBe('https://cdn.example.com/product.jpg')
         ->and($normalizer->normalize('http://leasingim.test/product.jpg'))->toBe('https://leasingim.test/product.jpg')
+        ->and($normalizer->normalize('https://cdn.example.com/products/image[1].jpg'))->toBe('https://cdn.example.com/products/image%5B1%5D.jpg')
+        ->and($normalizer->normalize('https://cdn.example.com/products/image%5B1%5D.jpg'))->toBe('https://cdn.example.com/products/image%5B1%5D.jpg')
+        ->and($normalizer->normalize('https://cdn.example.com/products/sample image.jpg'))->toBeNull()
+        ->and($normalizer->normalize('https://user:secret@cdn.example.com/product.jpg'))->toBeNull()
+        ->and($normalizer->normalize('https://cdn.example.com/product.jpg#fragment'))->toBeNull()
         ->and($normalizer->normalize('http://untrusted.example/product.jpg'))->toBeNull()
         ->and($normalizer->normalize('javascript:alert(1)'))->toBeNull();
 });
