@@ -11,6 +11,8 @@ return [
 
     'resources' => [],
 
+    'dependencies' => [],
+
     'webhook' => [
         'url' => env('GROW4ME_CONNECTOR_WEBHOOK_URL'),
         'secret' => env('GROW4ME_CONNECTOR_WEBHOOK_SECRET'),

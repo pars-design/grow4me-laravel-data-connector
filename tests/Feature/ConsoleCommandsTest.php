@@ -96,6 +96,11 @@ it('scaffolds a resource adapter without overwriting it by default', function ()
             'namespace App\\Grow4Me\\Resources;',
             "return 'products';",
             'return Product::class;',
+            "return 'catalog.product.v1';",
+            "data_set(\$payload, 'name', data_get(\$model, 'name'));",
+            "'name' => 'Name',",
+            "'name' => data_get(\$model, 'name'),",
+            'implements ExportableResourceAdapter',
         );
 
         artisan('make:grow4me-resource', [
@@ -107,6 +112,50 @@ it('scaffolds a resource adapter without overwriting it by default', function ()
     } finally {
         File::deleteDirectory($directory);
     }
+});
+
+it('scaffolds configured fields and export columns', function (): void {
+    $directory = sys_get_temp_dir().'/grow4me-resource-'.fake()->uuid();
+    $path = $directory.'/SupplierAdapter.php';
+
+    try {
+        artisan('make:grow4me-resource', [
+            'name' => 'SupplierAdapter',
+            '--model' => Product::class,
+            '--key' => 'suppliers',
+            '--contract' => 'dynamic.entry.v1',
+            '--external-id' => 'external_code',
+            '--active' => 'active',
+            '--updated-at' => 'updated_at',
+            '--field' => ['title=name', 'fields.category=category.name'],
+            '--export' => ['external_code=External code', 'name=Supplier name'],
+            '--with' => ['category'],
+            '--namespace' => 'App\\Grow4Me\\Resources',
+            '--path' => $directory,
+        ])->assertSuccessful();
+
+        expect(File::get($path))->toContain(
+            "return 'dynamic.entry.v1';",
+            "return (string) data_get(\$model, 'external_code');",
+            "return (bool) data_get(\$model, 'active');",
+            "'category',",
+            "data_set(\$payload, 'title', data_get(\$model, 'name'));",
+            "data_set(\$payload, 'fields.category', data_get(\$model, 'category.name'));",
+            "'external_code' => 'External code',",
+            "'name' => data_get(\$model, 'name'),",
+        );
+    } finally {
+        File::deleteDirectory($directory);
+    }
+});
+
+it('rejects malformed scaffold mappings', function (): void {
+    artisan('make:grow4me-resource', [
+        'name' => 'InvalidMappingAdapter',
+        '--model' => Product::class,
+        '--key' => 'products',
+        '--field' => ['name'],
+    ])->assertExitCode(2);
 });
 
 it('rejects unsafe scaffold resource keys', function (): void {

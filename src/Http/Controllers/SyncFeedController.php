@@ -6,9 +6,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use ParsDesign\Grow4MeDataConnector\Contracts\ResourceAdapter;
 use ParsDesign\Grow4MeDataConnector\Models\OutboxEvent;
 use ParsDesign\Grow4MeDataConnector\Resources\ResourceRegistry;
+use ParsDesign\Grow4MeDataConnector\Services\EnvelopeFactory;
 use ParsDesign\Grow4MeDataConnector\Support\SignedCursor;
 
 class SyncFeedController
@@ -18,6 +18,7 @@ class SyncFeedController
         string $resource,
         ResourceRegistry $resources,
         SignedCursor $cursors,
+        EnvelopeFactory $envelopes,
     ): JsonResponse {
         $adapter = $resources->get($resource);
         $limit = min(max($request->integer('limit', 100), 1), 100);
@@ -43,16 +44,14 @@ class SyncFeedController
             ? $cursors->encode([
                 'resource' => $resource,
                 'snapshot_at' => $snapshotAt->toIso8601String(),
-                'after' => $adapter->externalId($lastModel),
+                'after' => $adapter->cursorValue($lastModel),
             ])
             : null;
 
         return response()->json([
             'snapshot_at' => $snapshotAt->toIso8601String(),
             'cursor' => $nextCursor,
-            'records' => $pageModels
-                ->map(fn (Model $model): array => $this->envelope($adapter, $model))
-                ->all(),
+            'records' => $envelopes->forModels($adapter, $pageModels),
         ]);
     }
 
@@ -60,6 +59,7 @@ class SyncFeedController
         string $resource,
         string $externalId,
         ResourceRegistry $resources,
+        EnvelopeFactory $envelopes,
     ): JsonResponse {
         $adapter = $resources->get($resource);
         $model = $adapter->find($externalId);
@@ -82,20 +82,11 @@ class SyncFeedController
             ]);
         }
 
-        return response()->json($this->envelope($adapter, $model));
-    }
+        $lastEventAt = OutboxEvent::query()
+            ->where('resource', $resource)
+            ->where('external_id', $externalId)
+            ->max('occurred_at');
 
-    /**
-     * @return array{contract_version: string, external_id: string, active: bool, source_updated_at: string, payload: array<string, mixed>}
-     */
-    private function envelope(ResourceAdapter $adapter, Model $model): array
-    {
-        return [
-            'contract_version' => $adapter->contractVersion(),
-            'external_id' => $adapter->externalId($model),
-            'active' => $adapter->isActive($model),
-            'source_updated_at' => $adapter->sourceUpdatedAt($model)->utc()->toIso8601String(),
-            'payload' => $adapter->payload($model),
-        ];
+        return response()->json($envelopes->forModel($adapter, $model, $lastEventAt));
     }
 }

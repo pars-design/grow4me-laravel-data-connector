@@ -3,9 +3,10 @@
 namespace ParsDesign\Grow4MeDataConnector\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
+use ParsDesign\Grow4MeDataConnector\Contracts\ExportableResourceAdapter;
 use ParsDesign\Grow4MeDataConnector\Resources\EloquentResourceAdapter;
 
-class ProductResourceAdapter extends EloquentResourceAdapter
+class ProductResourceAdapter extends EloquentResourceAdapter implements ExportableResourceAdapter
 {
     public function key(): string
     {
@@ -24,6 +25,24 @@ class ProductResourceAdapter extends EloquentResourceAdapter
 
     public function payload(Model $model): array
     {
-        return ['name' => $model->name];
+        return [
+            'name' => $model->name,
+        ];
+    }
+
+    public function exportColumns(): array
+    {
+        return [
+            'name' => 'Name',
+            'description' => 'Description',
+        ];
+    }
+
+    public function exportRow(Model $model): array
+    {
+        return [
+            'name' => $model->name,
+            'description' => $model->description,
+        ];
     }
 }

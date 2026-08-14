@@ -6,6 +6,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 use ParsDesign\Grow4MeDataConnector\Grow4MeDataConnectorServiceProvider;
+use ParsDesign\Grow4MeDataConnector\Tests\Fixtures\CategoryDependencyResolver;
 use ParsDesign\Grow4MeDataConnector\Tests\Fixtures\ProductResourceAdapter;
 
 abstract class TestCase extends Orchestra
@@ -27,6 +28,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('grow4me-connector.token', 'test-token');
         $app['config']->set('grow4me-connector.cursor_secret', str_repeat('c', 64));
         $app['config']->set('grow4me-connector.resources', [ProductResourceAdapter::class]);
+        $app['config']->set('grow4me-connector.dependencies', [CategoryDependencyResolver::class]);
         $app['config']->set('grow4me-connector.webhook.url', 'https://grow4me.example/api/v1/sync/sources/source-id/events');
         $app['config']->set('grow4me-connector.webhook.secret', str_repeat('w', 64));
     }
@@ -38,7 +40,16 @@ abstract class TestCase extends Orchestra
         Schema::create('connector_test_products', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
+            $table->string('external_code')->nullable()->unique();
+            $table->text('description')->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
             $table->boolean('active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('connector_test_categories', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
             $table->timestamps();
         });
     }

@@ -7,7 +7,7 @@ dead-letter redrive without knowing the host application's product schema.
 
 ## Requirements
 
-- PHP 8.3–8.5
+- PHP 8.2–8.5
 - Laravel 12 or 13
 - A queue/scheduler-capable Laravel application
 
@@ -38,7 +38,14 @@ and webhook secrets must contain at least 32 characters.
 ```bash
 php artisan make:grow4me-resource ProductResourceAdapter \
   --model='App\Models\Product' \
-  --key=products
+  --key=products \
+  --contract=catalog.product.v1 \
+  --field=name=name \
+  --field=description=description \
+  --field=category=category.name \
+  --export=sku=SKU \
+  --export=name=Name \
+  --with=category
 ```
 
 An adapter translates a host model into the stable Grow4Me envelope. It may
@@ -52,9 +59,10 @@ namespace App\Grow4Me\Resources;
 
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
+use ParsDesign\Grow4MeDataConnector\Contracts\ExportableResourceAdapter;
 use ParsDesign\Grow4MeDataConnector\Resources\EloquentResourceAdapter;
 
-final class ProductResourceAdapter extends EloquentResourceAdapter
+final class ProductResourceAdapter extends EloquentResourceAdapter implements ExportableResourceAdapter
 {
     public function key(): string
     {
@@ -91,6 +99,22 @@ final class ProductResourceAdapter extends EloquentResourceAdapter
             'attributes' => $model->public_attributes ?? [],
         ];
     }
+
+    public function exportColumns(): array
+    {
+        return [
+            'sku' => 'SKU',
+            'name' => 'Name',
+        ];
+    }
+
+    public function exportRow(Model $model): array
+    {
+        return [
+            'sku' => $model->sku,
+            'name' => $model->name,
+        ];
+    }
 }
 ```
 
@@ -106,6 +130,24 @@ Register adapters in `config/grow4me-connector.php`:
 Multiple resource adapters may map completely different host schemas. Resource
 keys must be lowercase and URL-safe. A model mutation is recorded for every
 registered adapter that owns that model.
+
+For simple schemas, register a serializable declarative mapping instead of a
+PHP adapter. For transformers, custom queries, dependent models, and complete
+examples, see [Resource mapping](docs/resource-mapping.md).
+
+## CSV and XML export
+
+Resources that explicitly implement `ExportableResourceAdapter` can be
+exported without application-specific console commands:
+
+```bash
+php artisan grow4me:export products storage/app/exports/products.csv --format=csv
+php artisan grow4me:export products storage/app/exports/products.xml --format=xml
+```
+
+Only adapter-defined, human-readable columns are exported. Feed payload JSON is
+never inserted as a catch-all column. CSV cells beginning with spreadsheet
+formula characters are escaped by the package.
 
 ## Feed contract
 
@@ -208,7 +250,7 @@ composer test
 vendor/bin/pint
 ```
 
-The CI matrix covers Laravel 12/13 and PHP 8.3/8.4/8.5. See [CONTRIBUTING.md](CONTRIBUTING.md)
+The CI matrix covers Laravel 12/13 and PHP 8.2/8.3/8.4/8.5. See [CONTRIBUTING.md](CONTRIBUTING.md)
 and [SECURITY.md](SECURITY.md).
 
 ## License

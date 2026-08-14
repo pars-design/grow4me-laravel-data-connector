@@ -47,6 +47,17 @@ abstract class EloquentResourceAdapter implements ResourceAdapter
         return (string) $model->getKey();
     }
 
+    public function cursorValue(Model $model): int|string
+    {
+        $value = $model->getKey();
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw new RuntimeException('Resource cursor values must be integers or strings.');
+        }
+
+        return $value;
+    }
+
     public function sourceUpdatedAt(Model $model): CarbonInterface
     {
         $updatedAt = $model->getAttribute($model->getUpdatedAtColumn());

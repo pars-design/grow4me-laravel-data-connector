@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use ParsDesign\Grow4MeDataConnector\Console\Commands\DeliverOutboxCommand;
 use ParsDesign\Grow4MeDataConnector\Console\Commands\DoctorCommand;
+use ParsDesign\Grow4MeDataConnector\Console\Commands\ExportResourceCommand;
 use ParsDesign\Grow4MeDataConnector\Console\Commands\InstallCommand;
 use ParsDesign\Grow4MeDataConnector\Console\Commands\MakeResourceCommand;
 use ParsDesign\Grow4MeDataConnector\Console\Commands\RedriveOutboxCommand;
@@ -35,6 +36,8 @@ class Grow4MeDataConnectorServiceProvider extends ServiceProvider
             $observer = $this->app->make(ResourceOutboxObserver::class);
             $modelClasses = collect($this->app->make(ResourceRegistry::class)->all())
                 ->map(fn ($resource): string => $resource->modelClass())
+                ->merge(collect($this->app->make(ResourceRegistry::class)->dependencies())
+                    ->map(fn ($resolver): string => $resolver->modelClass()))
                 ->unique();
 
             foreach ($modelClasses as $modelClass) {
@@ -46,6 +49,7 @@ class Grow4MeDataConnectorServiceProvider extends ServiceProvider
             $this->commands([
                 DeliverOutboxCommand::class,
                 DoctorCommand::class,
+                ExportResourceCommand::class,
                 InstallCommand::class,
                 MakeResourceCommand::class,
                 RedriveOutboxCommand::class,

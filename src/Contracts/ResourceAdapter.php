@@ -26,6 +26,8 @@ interface ResourceAdapter
 
     public function externalId(Model $model): string;
 
+    public function cursorValue(Model $model): int|string;
+
     public function sourceUpdatedAt(Model $model): CarbonInterface;
 
     public function isActive(Model $model): bool;
