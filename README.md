@@ -244,6 +244,8 @@ Grow4Me environment.
 
 ## Development
 
+Run these commands from a Git checkout of this repository.
+
 ```bash
 composer install
 composer validate --strict
@@ -257,9 +259,10 @@ The repository ignores `composer.lock`. On a fresh checkout, `composer install`
 resolves dependencies for your PHP environment and creates a local lock file.
 `composer audit --locked` checks the versions recorded in that file.
 
-The [CI workflow](.github/workflows/tests.yml) resolves and tests dependencies
+The [CI workflow](https://github.com/pars-design/grow4me-laravel-data-connector/blob/main/.github/workflows/tests.yml) resolves and tests dependencies
 separately for Laravel 12 on PHP 8.2, 8.3 and 8.4, and Laravel 13 on PHP 8.4 and
-8.5. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+8.5. See the [contribution guide](https://github.com/pars-design/grow4me-laravel-data-connector/blob/main/CONTRIBUTING.md)
+and [security policy](SECURITY.md).
 
 ## License
 
